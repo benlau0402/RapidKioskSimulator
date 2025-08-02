@@ -3,8 +3,8 @@ import pandas as pd
 
 def init_db():
     # Update these to match your CSV file paths
-    station_csv = 'Route.csv'
-    fare_csv = 'Fare.csv'
+    station_csv = 'data/Route.csv'
+    fare_csv = 'data/Fare.csv'
 
     conn = sqlite3.connect('metro.db')
     c = conn.cursor()
