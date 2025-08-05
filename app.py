@@ -6,14 +6,12 @@ from realtime import init_realtime
 app = Flask(__name__)
 socketio = SocketIO(app, cors_allowed_origins="*")
 
-# Register REST routes
 app.register_blueprint(routes_bp)
 
 @app.route('/')
 def index():
     return render_template('index.html')
 
-# Register SocketIO handlers
 init_realtime(socketio)
 
 if __name__ == '__main__':

@@ -3,19 +3,22 @@ import sqlite3
 
 bp = Blueprint('routes', __name__)
 
+def get_db():
+    return sqlite3.connect('metro.db')
+
 @bp.route('/stations')
 def get_stations():
-    with sqlite3.connect('metro.db') as conn:
+    with get_db() as conn:
         c = conn.cursor()
-        c.execute("SELECT * FROM stations")
-        stations = [dict(zip([column[0] for column in c.description], row)) for row in c.fetchall()]
+        c.execute("SELECT station_id, name FROM stations ORDER BY station_id")
+        stations = [{'station_id': row[0], 'name': row[1]} for row in c.fetchall()]
     return jsonify(stations)
 
 @bp.route('/fare')
 def get_fare():
-    origin = int(request.args.get('from'))
-    dest = int(request.args.get('to'))
-    with sqlite3.connect('metro.db') as conn:
+    origin = request.args.get('from')
+    dest = request.args.get('to')
+    with get_db() as conn:
         c = conn.cursor()
         c.execute("SELECT price FROM fares WHERE origin_id=? AND destination_id=?", (origin, dest))
         row = c.fetchone()
@@ -26,9 +29,9 @@ def get_fare():
 
 @bp.route('/time')
 def get_time():
-    origin = int(request.args.get('from'))
-    dest = int(request.args.get('to'))
-    with sqlite3.connect('metro.db') as conn:
+    origin = request.args.get('from')
+    dest = request.args.get('to')
+    with get_db() as conn:
         c = conn.cursor()
         c.execute("SELECT minutes FROM times WHERE origin_id=? AND destination_id=?", (origin, dest))
         row = c.fetchone()
@@ -39,9 +42,9 @@ def get_time():
 
 @bp.route('/routecode')
 def get_routecode():
-    origin = int(request.args.get('from'))
-    dest = int(request.args.get('to'))
-    with sqlite3.connect('metro.db') as conn:
+    origin = request.args.get('from')
+    dest = request.args.get('to')
+    with get_db() as conn:
         c = conn.cursor()
         c.execute("SELECT route_code FROM routes WHERE origin_id=? AND destination_id=?", (origin, dest))
         row = c.fetchone()
@@ -49,3 +52,15 @@ def get_routecode():
         return jsonify({'route_code': row[0]})
     else:
         return jsonify({'error': 'No route found'}), 404
+
+@bp.route('/arrivals')
+def get_arrivals():
+    station_id = request.args.get('station_id')
+    with get_db() as conn:
+        c = conn.cursor()
+        c.execute(
+            "SELECT minutes, stations.name FROM arrivals "
+            "JOIN stations ON arrivals.destination_id = stations.station_id "
+            "WHERE arrivals.station_id=? ORDER BY minutes", (station_id,))
+        arrivals = [{'minutes': row[0], 'destination': row[1]} for row in c.fetchall()]
+    return jsonify(arrivals)

@@ -2,126 +2,293 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Fantastic Four Metro Kiosk</title>
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  <script src="https://cdn.tailwindcss.com"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Bangers&family=Urbanist:wght@400;700;900&display=swap" rel="stylesheet">
+  <title>Metro Route Simulator</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- Modern, friendly Google Font -->
+  <link href="https://fonts.googleapis.com/css2?family=Urbanist:wght@400;700;900&display=swap" rel="stylesheet">
   <style>
-    html, body { font-family: 'Bangers', 'Urbanist', Arial, sans-serif; }
-    .ff-logo {
-      background: radial-gradient(circle, #fff 65%, #0056b3 100%);
-      border-radius: 50%;
-      box-shadow: 0 0 24px #0094ff55;
-      width: 4rem;
-      height: 4rem;
-      display: flex; align-items: center; justify-content: center;
-      margin-bottom: .7rem;
-      border: 4px solid #FFB347;
+    body {
+      background: #f7f8fa;
+      color: #232340;
+      font-family: 'Urbanist', Arial, Helvetica, sans-serif;
+      margin: 0;
+      padding: 0;
+      min-height: 100vh;
     }
-    .ff-mr { background: linear-gradient(135deg, #008cff 60%, #e0f3ff 100%); }
-    .ff-inv { background: linear-gradient(135deg, #00cfff 55%, #fffbe8 100%); }
-    .ff-torch { background: linear-gradient(135deg, #ff9000 60%, #ffe675 100%);}
-    .ff-thing { background: repeating-linear-gradient(120deg, #ea6b12 0 6px, #fdad47 10px 18px);}
-    @keyframes pop {0%{transform:scale(1);}60%{transform:scale(1.12);}100%{transform:scale(1);}}
-    .ff-bounce { animation: pop 1s infinite alternate cubic-bezier(.56,.19,.4,1.33);}
+    .container {
+      max-width: 1120px;
+      margin: 0 auto;
+      padding: 34px 20px 0 20px;
+    }
+    h1 {
+      font-family: 'Urbanist', sans-serif;
+      font-weight: 900;
+      font-size: 2.7rem;
+      text-align: center;
+      letter-spacing: 0.04em;
+      margin: 0 0 24px 0;
+    }
+    .summary-row {
+      display: flex; justify-content: space-between; margin-bottom: 40px; align-items: flex-end;
+      flex-wrap: wrap;
+      gap: 18px;
+    }
+    .summary-box {
+      background: #fff;
+      border-radius: 22px;
+      padding: 22px 38px 22px 38px;
+      min-width: 270px;
+      margin: 5px;
+      box-shadow: 0 8px 40px 0 #99caff32;
+      text-align: center;
+      font-size: 2.2rem;
+      color: #212174;
+      font-weight: 900;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .summary-label { font-size: 1.2rem; color: #94a0bc; font-weight: 700; margin-bottom: 0.28em; letter-spacing:0.04em;}
+    #fee, #duration { color: #2140c2; font-size:2.5rem; letter-spacing:0.03em; }
+    .controls {
+      display: flex; justify-content: center; align-items: center; margin-bottom: 42px;
+      gap: 22px;
+    }
+    .dropdown {
+      font-family: 'Urbanist', Arial, Helvetica, sans-serif;
+      font-size: 1.18rem;
+      background: #fafdff;
+      color: #2e2e5a;
+      border: 2px solid #dde6f7;
+      border-radius: 16px;
+      padding: 14px 38px 14px 20px;
+      min-width: 260px;
+      box-sizing: border-box;
+      margin: 0 8px;
+      font-weight: 700;
+      outline: none;
+      box-shadow: 0 2px 18px #dde6f4bb;
+      transition: border 0.15s;
+      cursor: pointer;
+      text-align: center;
+      text-overflow: ellipsis;
+    }
+    .dropdown:focus { border: 2px solid #4ba5ff; }
+    /* Metro lines */
+    .metro-map {
+      margin: 36px 0 44px 0;
+      position: relative;
+      height: 265px;
+      width: 100%;
+      max-width: 1000px;
+      background: none;
+      display: block;
+    }
+    .station-dot {
+      cursor: pointer;
+      stroke: #fff;
+      stroke-width: 3.5;
+      fill: #30b7e8;
+      transition: fill 0.18s, stroke 0.2s;
+    }
+    .station-dot.selected {
+      fill: #FFA300;
+      stroke: #232340;
+      stroke-width: 6;
+    }
+    .station-label {
+      font-family: 'Urbanist', Arial, Helvetica, sans-serif;
+      font-size: 1.01em;
+      fill: #232340;
+      font-weight: 700;
+      text-anchor: end;
+      pointer-events: none;
+      user-select: none;
+      transform: rotate(-36deg);
+      /* will be applied via JS for SVG */
+    }
+    .line-main { stroke: #30b7e8; stroke-width: 7; }
+    /* Tables */
+    .tables-row {
+      display: flex;
+      gap: 36px;
+      justify-content: center;
+      margin-top: 20px;
+      flex-wrap: wrap;
+    }
+    .arr-table {
+      background: #fff;
+      border-radius: 20px;
+      min-width: 260px;
+      padding: 0 16px 18px 16px;
+      margin-bottom: 10px;
+      font-size: 1.15rem;
+      color: #232340;
+      box-shadow: 0 4px 26px #e3e8f2;
+      border: 1.5px solid #e7e7ef;
+    }
+    .arr-table th, .arr-table td {
+      border-bottom: 1.1px solid #e8e8ef;
+      padding: 9px 14px;
+      text-align: center;
+    }
+    .arr-table th {
+      color: #38b0e6;
+      font-weight: 900;
+      font-size: 1.11em;
+      background: #f7fafd;
+      border-radius: 8px 8px 0 0;
+    }
+    .arr-table tr:last-child td { border-bottom: none; }
+    @media (max-width: 950px) {
+      .tables-row { flex-direction: column; align-items: center; gap: 20px; }
+      .metro-map { height: 180px; }
+      .container { padding: 18px; }
+      .dropdown { min-width: 160px; }
+    }
   </style>
 </head>
-<body class="bg-gradient-to-tr from-[#3dd8fa] via-[#e6f7ff] to-[#fff7df] min-h-screen flex flex-col items-center">
-  <header class="pt-9 pb-4 flex flex-col items-center">
-    <span class="ff-logo flex items-center justify-center">
-      <span class="text-4xl text-[#0056b3] font-black font-[Bangers] drop-shadow-lg">4</span>
-    </span>
-    <h1 class="text-5xl font-black bg-gradient-to-r from-[#008cff] to-[#FFA300] bg-clip-text text-transparent drop-shadow-xl tracking-widest" style="font-family:'Bangers',cursive,Arial;">Fantastic Four Metro</h1>
-    <p class="text-xl font-bold text-[#0056b3] mt-2 drop-shadow-sm">Live Train Status Board</p>
-  </header>
+<body>
+  <div class="container">
+    <h1>Metro Route Simulator</h1>
+    <div class="summary-row">
+      <div class="summary-box">
+        <div class="summary-label">Total Fee</div>
+        <div id="fee">RMXX.XX</div>
+      </div>
+      <div class="summary-box">
+        <div class="summary-label">Duration</div>
+        <div id="duration">XX mins</div>
+      </div>
+    </div>
 
-  <main class="w-full max-w-3xl px-3 flex flex-col gap-6 items-center">
-    <!-- Real-Time Trains Status Cards -->
-    <div id="trains" class="w-full grid grid-cols-1 sm:grid-cols-2 gap-8 py-6"></div>
-    <!-- Route Planner -->
-    <section class="glass mt-6 p-7 flex flex-col gap-6 items-center relative shadow-2xl rounded-2xl bg-white/70">
-      <form id="route-form" class="flex flex-col md:flex-row gap-4 items-center w-full justify-center">
-        <select id="origin" class="p-3 rounded-2xl text-base bg-white/90 font-bold border-2 border-[#00A3FF] outline-none ring-2 ring-[#FFA300]/40 focus:ring-[#FFA300] transition w-48 shadow" required>
-          <option value="">From Station</option>
-        </select>
-        <span class="font-black text-3xl text-[#ff9000] px-1 hidden md:inline">→</span>
-        <select id="destination" class="p-3 rounded-2xl text-base bg-white/90 font-bold border-2 border-[#00A3FF] outline-none ring-2 ring-[#FFA300]/40 focus:ring-[#FFA300] transition w-48 shadow" required>
-          <option value="">To Station</option>
-        </select>
-        <button type="submit" class="ml-2 mt-3 md:mt-0 px-8 py-3 rounded-2xl font-black text-2xl bg-gradient-to-br from-[#008cff] via-[#00A3FF] to-[#FFA300] text-white shadow-lg hover:scale-105 active:scale-95 focus:outline-none focus:ring-4 focus:ring-[#FFA300]/40 transition-all">Go!</button>
-      </form>
-      <div id="route-result" class="mt-2 flex-1 text-xl text-[#ff9000] font-black"></div>
-    </section>
-    <footer class="mt-12 pb-5 text-center text-base text-[#FFA300]/80 font-black font-[Bangers]">© 2025 Fantastic Four Metro &mdash; With Great Power Comes Great Transit!</footer>
-  </main>
+    <div class="controls">
+      <select id="fromStation" class="dropdown"></select>
+      <span style="font-size:2.2rem;color:#b3b3c7;">&hellip;</span>
+      <select id="toStation" class="dropdown"></select>
+    </div>
 
-  <!-- Socket.IO -->
-  <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+    <svg class="metro-map" id="metroSVG" width="1000" height="220"></svg>
+
+    <div class="tables-row">
+      <table class="arr-table">
+        <thead><tr><th>Time</th><th>Destination</th></tr></thead>
+        <tbody id="arr1"></tbody>
+      </table>
+      <table class="arr-table">
+        <thead><tr><th>Time</th><th>Destination</th></tr></thead>
+        <tbody id="arr2"></tbody>
+      </table>
+    </div>
+  </div>
   <script>
-    // Fantastic Four themed cards for each train
-    const ffTrainStyles = [
-      {className: "ff-mr ff-bounce", label: "Mr. Fantastic"},
-      {className: "ff-inv ff-bounce", label: "Invisible Woman"},
-      {className: "ff-torch ff-bounce", label: "Human Torch"},
-      {className: "ff-thing ff-bounce", label: "Thing"},
-    ];
+    let stations = [];
+    let stationMap = {};
 
-    // --- Train Status Board ---
-    const trains = {};
+    async function loadStations() {
+      const res = await fetch('/stations');
+      stations = await res.json();
+      stationMap = {};
+      stations.forEach(s => { stationMap[s.station_id] = s.name; stationMap[s.name] = s.station_id; });
+      renderDropdowns();
+      renderMetroSVG();
+      document.getElementById('fromStation').value = stations[0].name;
+      document.getElementById('toStation').value = stations[1].name;
+      fetchRouteData();
+      fetchArrivals();
+    }
 
-    function updateTrainsBoard() {
-      const container = document.getElementById('trains');
-      container.innerHTML = '';
-      Object.values(trains).forEach(train => {
-        const style = ffTrainStyles[(train.train_id-1)%4];
-        container.innerHTML += `
-          <div class="rounded-2xl shadow-xl flex flex-col items-center p-5 bg-white/90 ${style.className}">
-            <div class="text-3xl font-black mb-2 flex items-center gap-2">
-              <span class="inline-block w-10 h-10 rounded-full bg-white text-[#0056b3] flex items-center justify-center mr-2 border-2 border-[#ffa600] font-[Bangers] text-2xl shadow ${style.className}">${train.train_id}</span>
-              <span>${style.label}</span>
-            </div>
-            <div class="text-xl font-bold text-[#0056b3]">From: <span class="text-[#FFA300]">${train.origin_name}</span></div>
-            <div class="text-xl font-bold text-[#0056b3]">To: <span class="text-[#FFA300]">${train.destination_name}</span></div>
-            <div class="text-lg text-gray-600 font-semibold mt-2">Last update: ${new Date(train.timestamp*1000).toLocaleTimeString()}</div>
-          </div>
-        `;
+    function renderDropdowns() {
+      let from = document.getElementById('fromStation');
+      let to = document.getElementById('toStation');
+      from.innerHTML = to.innerHTML = '';
+      stations.forEach(s => {
+        from.innerHTML += `<option value="${s.name}">${s.name}</option>`;
+        to.innerHTML += `<option value="${s.name}">${s.name}</option>`;
       });
     }
 
-    // Socket.IO real-time events
-    const socket = io();
-    socket.on('connect', () => { console.log('Connected to WebSocket'); });
-    socket.on('train_update', data => {
-      trains[data.train_id] = data;
-      updateTrainsBoard();
-    });
-
-    // Load station names for dropdowns
-    fetch('/stations').then(res => res.json()).then(stations => {
-      stations.forEach(st => {
-        document.getElementById('origin').innerHTML += `<option value="${st.station_id}">${st.name}</option>`;
-        document.getElementById('destination').innerHTML += `<option value="${st.station_id}">${st.name}</option>`;
+    function renderMetroSVG() {
+      const svg = document.getElementById('metroSVG');
+      svg.innerHTML = '';
+      const y = 125;
+      const xStart = 65, xEnd = 960;
+      const n = stations.length;
+      const labelAngle = -38; // degrees
+      svg.innerHTML += `<line class="line-main" x1="${xStart}" y1="${y}" x2="${xEnd}" y2="${y}"/>`;
+      stations.forEach((s, i) => {
+        let x = xStart + i*(xEnd-xStart)/(n-1);
+        svg.innerHTML += `<circle class="station-dot" cx="${x}" cy="${y}" r="13"
+          onclick="selectStation('${s.name}')" id="dot-${s.station_id}"/>`;
+        // Place rotated text below the dot
+        svg.innerHTML += `<g transform="translate(${x},${y+32}) rotate(${labelAngle})">
+          <text class="station-label">${s.name}</text></g>`;
       });
+      highlightSelectedDots();
+    }
+
+    function highlightSelectedDots() {
+      stations.forEach(s => {
+        const dot = document.getElementById('dot-' + s.station_id);
+        if (!dot) return;
+        if (s.name === document.getElementById('fromStation').value ||
+            s.name === document.getElementById('toStation').value) {
+          dot.classList.add('selected');
+        } else {
+          dot.classList.remove('selected');
+        }
+      });
+    }
+
+    window.selectStation = function(name) {
+      const from = document.getElementById('fromStation');
+      const to = document.getElementById('toStation');
+      if (from.value === name) {
+        to.value = name;
+      } else {
+        from.value = name;
+      }
+      highlightSelectedDots();
+      fetchRouteData();
+      fetchArrivals();
+    }
+
+    document.getElementById('fromStation').addEventListener('change', ()=>{
+      highlightSelectedDots(); fetchRouteData(); fetchArrivals();
+    });
+    document.getElementById('toStation').addEventListener('change', ()=>{
+      highlightSelectedDots(); fetchRouteData(); fetchArrivals();
     });
 
-    // Route planner logic (calls backend)
-    document.getElementById('route-form').addEventListener('submit', async function(e) {
-      e.preventDefault();
-      const from = document.getElementById('origin').value;
-      const to = document.getElementById('destination').value;
-      if (!from || !to) return;
-      const fare = await fetch(`/fare?from=${from}&to=${to}`).then(res => res.json());
-      const time = await fetch(`/time?from=${from}&to=${to}`).then(res => res.json());
-      const route = await fetch(`/routecode?from=${from}&to=${to}`).then(res => res.json());
-      if (fare.error || time.error || route.error) {
-        document.getElementById('route-result').innerHTML = `<span class="text-red-500 font-black">No route/fare/time found!</span>`;
+    async function fetchRouteData() {
+      const fromName = document.getElementById('fromStation').value;
+      const toName = document.getElementById('toStation').value;
+      if (fromName === toName) {
+        document.getElementById('fee').textContent = 'RM--.--';
+        document.getElementById('duration').textContent = '-- mins';
         return;
       }
-      document.getElementById('route-result').innerHTML = 
-        `<span class="font-black text-[#008cff]">Route:</span> <span class="text-[#FFA300]">${route.route_code}</span><br>
-         <span class="font-black text-[#008cff]">Fare:</span> <span class="text-2xl font-black text-[#FFA300]">RM${fare.price.toFixed(2)}</span><br>
-         <span class="font-black text-[#008cff]">Estimated Time:</span> <span class="text-2xl font-black text-[#FFA300]">${time.minutes} min</span>`;
-    });
+      const from = stationMap[fromName], to = stationMap[toName];
+      const [fareRes, timeRes] = await Promise.all([
+        fetch(`/fare?from=${from}&to=${to}`),
+        fetch(`/time?from=${from}&to=${to}`)
+      ]);
+      const fare = await fareRes.json();
+      const time = await timeRes.json();
+      document.getElementById('fee').textContent = fare.price !== undefined ? `RM${Number(fare.price).toFixed(2)}` : 'N/A';
+      document.getElementById('duration').textContent = time.minutes !== undefined ? `${time.minutes} mins` : 'N/A';
+    }
+
+    async function fetchArrivals() {
+      const from = stationMap[document.getElementById('fromStation').value];
+      const to = stationMap[document.getElementById('toStation').value];
+      const arr1 = await fetch(`/arrivals?station_id=${from}`).then(res=>res.json());
+      const arr2 = await fetch(`/arrivals?station_id=${to}`).then(res=>res.json());
+      document.getElementById('arr1').innerHTML = arr1.map(r=>`<tr><td>${r.minutes}</td><td>${r.destination}</td></tr>`).join('');
+      document.getElementById('arr2').innerHTML = arr2.map(r=>`<tr><td>${r.minutes}</td><td>${r.destination}</td></tr>`).join('');
+    }
+
+    document.addEventListener('DOMContentLoaded', loadStations);
   </script>
 </body>
 </html>
