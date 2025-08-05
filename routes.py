@@ -1,7 +1,5 @@
 from flask import Blueprint, jsonify, request
 import sqlite3
-import networkx as nx
-import pandas as pd
 
 bp = Blueprint('routes', __name__)
 
@@ -15,8 +13,8 @@ def get_stations():
 
 @bp.route('/fare')
 def get_fare():
-    origin = request.args.get('from')
-    dest = request.args.get('to')
+    origin = int(request.args.get('from'))
+    dest = int(request.args.get('to'))
     with sqlite3.connect('metro.db') as conn:
         c = conn.cursor()
         c.execute("SELECT price FROM fares WHERE origin_id=? AND destination_id=?", (origin, dest))
@@ -26,18 +24,28 @@ def get_fare():
     else:
         return jsonify({'error': 'No fare found'}), 404
 
-@bp.route('/route')
-def get_route():
+@bp.route('/time')
+def get_time():
     origin = int(request.args.get('from'))
     dest = int(request.args.get('to'))
     with sqlite3.connect('metro.db') as conn:
-        fares = pd.read_sql("SELECT * FROM fares", conn)
-    G = nx.DiGraph()
-    for _, row in fares.iterrows():
-        G.add_edge(row['origin_id'], row['destination_id'], weight=row['price'])
-    try:
-        path = nx.shortest_path(G, source=origin, target=dest, weight='weight')
-        price = nx.shortest_path_length(G, source=origin, target=dest, weight='weight')
-        return jsonify({'route': path, 'total_price': price})
-    except nx.NetworkXNoPath:
+        c = conn.cursor()
+        c.execute("SELECT minutes FROM times WHERE origin_id=? AND destination_id=?", (origin, dest))
+        row = c.fetchone()
+    if row:
+        return jsonify({'minutes': row[0]})
+    else:
+        return jsonify({'error': 'No time found'}), 404
+
+@bp.route('/routecode')
+def get_routecode():
+    origin = int(request.args.get('from'))
+    dest = int(request.args.get('to'))
+    with sqlite3.connect('metro.db') as conn:
+        c = conn.cursor()
+        c.execute("SELECT route_code FROM routes WHERE origin_id=? AND destination_id=?", (origin, dest))
+        row = c.fetchone()
+    if row:
+        return jsonify({'route_code': row[0]})
+    else:
         return jsonify({'error': 'No route found'}), 404

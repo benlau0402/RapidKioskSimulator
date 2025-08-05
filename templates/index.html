@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Fantastic Four Metro Kiosk</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Bangers&family=Urbanist:wght@400;700;900&display=swap" rel="stylesheet">
+  <style>
+    html, body { font-family: 'Bangers', 'Urbanist', Arial, sans-serif; }
+    .ff-logo {
+      background: radial-gradient(circle, #fff 65%, #0056b3 100%);
+      border-radius: 50%;
+      box-shadow: 0 0 24px #0094ff55;
+      width: 4rem;
+      height: 4rem;
+      display: flex; align-items: center; justify-content: center;
+      margin-bottom: .7rem;
+      border: 4px solid #FFB347;
+    }
+    .ff-mr { background: linear-gradient(135deg, #008cff 60%, #e0f3ff 100%); }
+    .ff-inv { background: linear-gradient(135deg, #00cfff 55%, #fffbe8 100%); }
+    .ff-torch { background: linear-gradient(135deg, #ff9000 60%, #ffe675 100%);}
+    .ff-thing { background: repeating-linear-gradient(120deg, #ea6b12 0 6px, #fdad47 10px 18px);}
+    @keyframes pop {0%{transform:scale(1);}60%{transform:scale(1.12);}100%{transform:scale(1);}}
+    .ff-bounce { animation: pop 1s infinite alternate cubic-bezier(.56,.19,.4,1.33);}
+  </style>
+</head>
+<body class="bg-gradient-to-tr from-[#3dd8fa] via-[#e6f7ff] to-[#fff7df] min-h-screen flex flex-col items-center">
+  <header class="pt-9 pb-4 flex flex-col items-center">
+    <span class="ff-logo flex items-center justify-center">
+      <span class="text-4xl text-[#0056b3] font-black font-[Bangers] drop-shadow-lg">4</span>
+    </span>
+    <h1 class="text-5xl font-black bg-gradient-to-r from-[#008cff] to-[#FFA300] bg-clip-text text-transparent drop-shadow-xl tracking-widest" style="font-family:'Bangers',cursive,Arial;">Fantastic Four Metro</h1>
+    <p class="text-xl font-bold text-[#0056b3] mt-2 drop-shadow-sm">Live Train Status Board</p>
+  </header>
+
+  <main class="w-full max-w-3xl px-3 flex flex-col gap-6 items-center">
+    <!-- Real-Time Trains Status Cards -->
+    <div id="trains" class="w-full grid grid-cols-1 sm:grid-cols-2 gap-8 py-6"></div>
+    <!-- Route Planner -->
+    <section class="glass mt-6 p-7 flex flex-col gap-6 items-center relative shadow-2xl rounded-2xl bg-white/70">
+      <form id="route-form" class="flex flex-col md:flex-row gap-4 items-center w-full justify-center">
+        <select id="origin" class="p-3 rounded-2xl text-base bg-white/90 font-bold border-2 border-[#00A3FF] outline-none ring-2 ring-[#FFA300]/40 focus:ring-[#FFA300] transition w-48 shadow" required>
+          <option value="">From Station</option>
+        </select>
+        <span class="font-black text-3xl text-[#ff9000] px-1 hidden md:inline">→</span>
+        <select id="destination" class="p-3 rounded-2xl text-base bg-white/90 font-bold border-2 border-[#00A3FF] outline-none ring-2 ring-[#FFA300]/40 focus:ring-[#FFA300] transition w-48 shadow" required>
+          <option value="">To Station</option>
+        </select>
+        <button type="submit" class="ml-2 mt-3 md:mt-0 px-8 py-3 rounded-2xl font-black text-2xl bg-gradient-to-br from-[#008cff] via-[#00A3FF] to-[#FFA300] text-white shadow-lg hover:scale-105 active:scale-95 focus:outline-none focus:ring-4 focus:ring-[#FFA300]/40 transition-all">Go!</button>
+      </form>
+      <div id="route-result" class="mt-2 flex-1 text-xl text-[#ff9000] font-black"></div>
+    </section>
+    <footer class="mt-12 pb-5 text-center text-base text-[#FFA300]/80 font-black font-[Bangers]">© 2025 Fantastic Four Metro &mdash; With Great Power Comes Great Transit!</footer>
+  </main>
+
+  <!-- Socket.IO -->
+  <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+  <script>
+    // Fantastic Four themed cards for each train
+    const ffTrainStyles = [
+      {className: "ff-mr ff-bounce", label: "Mr. Fantastic"},
+      {className: "ff-inv ff-bounce", label: "Invisible Woman"},
+      {className: "ff-torch ff-bounce", label: "Human Torch"},
+      {className: "ff-thing ff-bounce", label: "Thing"},
+    ];
+
+    // --- Train Status Board ---
+    const trains = {};
+
+    function updateTrainsBoard() {
+      const container = document.getElementById('trains');
+      container.innerHTML = '';
+      Object.values(trains).forEach(train => {
+        const style = ffTrainStyles[(train.train_id-1)%4];
+        container.innerHTML += `
+          <div class="rounded-2xl shadow-xl flex flex-col items-center p-5 bg-white/90 ${style.className}">
+            <div class="text-3xl font-black mb-2 flex items-center gap-2">
+              <span class="inline-block w-10 h-10 rounded-full bg-white text-[#0056b3] flex items-center justify-center mr-2 border-2 border-[#ffa600] font-[Bangers] text-2xl shadow ${style.className}">${train.train_id}</span>
+              <span>${style.label}</span>
+            </div>
+            <div class="text-xl font-bold text-[#0056b3]">From: <span class="text-[#FFA300]">${train.origin_name}</span></div>
+            <div class="text-xl font-bold text-[#0056b3]">To: <span class="text-[#FFA300]">${train.destination_name}</span></div>
+            <div class="text-lg text-gray-600 font-semibold mt-2">Last update: ${new Date(train.timestamp*1000).toLocaleTimeString()}</div>
+          </div>
+        `;
+      });
+    }
+
+    // Socket.IO real-time events
+    const socket = io();
+    socket.on('connect', () => { console.log('Connected to WebSocket'); });
+    socket.on('train_update', data => {
+      trains[data.train_id] = data;
+      updateTrainsBoard();
+    });
+
+    // Load station names for dropdowns
+    fetch('/stations').then(res => res.json()).then(stations => {
+      stations.forEach(st => {
+        document.getElementById('origin').innerHTML += `<option value="${st.station_id}">${st.name}</option>`;
+        document.getElementById('destination').innerHTML += `<option value="${st.station_id}">${st.name}</option>`;
+      });
+    });
+
+    // Route planner logic (calls backend)
+    document.getElementById('route-form').addEventListener('submit', async function(e) {
+      e.preventDefault();
+      const from = document.getElementById('origin').value;
+      const to = document.getElementById('destination').value;
+      if (!from || !to) return;
+      const fare = await fetch(`/fare?from=${from}&to=${to}`).then(res => res.json());
+      const time = await fetch(`/time?from=${from}&to=${to}`).then(res => res.json());
+      const route = await fetch(`/routecode?from=${from}&to=${to}`).then(res => res.json());
+      if (fare.error || time.error || route.error) {
+        document.getElementById('route-result').innerHTML = `<span class="text-red-500 font-black">No route/fare/time found!</span>`;
+        return;
+      }
+      document.getElementById('route-result').innerHTML = 
+        `<span class="font-black text-[#008cff]">Route:</span> <span class="text-[#FFA300]">${route.route_code}</span><br>
+         <span class="font-black text-[#008cff]">Fare:</span> <span class="text-2xl font-black text-[#FFA300]">RM${fare.price.toFixed(2)}</span><br>
+         <span class="font-black text-[#008cff]">Estimated Time:</span> <span class="text-2xl font-black text-[#FFA300]">${time.minutes} min</span>`;
+    });
+  </script>
+</body>
+</html>

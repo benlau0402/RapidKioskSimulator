@@ -9,13 +9,12 @@ socketio = SocketIO(app, cors_allowed_origins="*")
 # Register REST routes
 app.register_blueprint(routes_bp)
 
-# Home route for frontend
 @app.route('/')
 def index():
     return render_template('index.html')
 
-# Register real-time handlers
+# Register SocketIO handlers
 init_realtime(socketio)
 
 if __name__ == '__main__':
-    socketio.run(app, host="0.0.0.0", port=5000)
+    socketio.run(app, host="0.0.0.0", port=5001)
