@@ -1,0 +1,7 @@
+# Python bytecode
+__pycache__/
+
+# Other common ignores for Python projects
+*.pyc
+.env
+venv/
