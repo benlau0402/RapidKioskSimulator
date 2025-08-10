@@ -22,6 +22,7 @@ def init_db():
     c.execute('DROP TABLE IF EXISTS times')
     c.execute('DROP TABLE IF EXISTS routes')
     c.execute('DROP TABLE IF EXISTS arrivals')
+    c.execute('DROP TABLE IF EXISTS trains')
     c.execute('''
         CREATE TABLE stations (station_id INTEGER PRIMARY KEY, name TEXT)
     ''')
@@ -39,7 +40,17 @@ def init_db():
             station_id INTEGER,
             train_id INTEGER,
             minutes INTEGER,
-            destination_id INTEGER
+            destination_id INTEGER,
+            arrival_timestamp REAL
+        )
+    ''')
+    c.execute('''
+        CREATE TABLE trains (
+            train_id INTEGER PRIMARY KEY,
+            line TEXT,
+            direction TEXT,
+            current_station_id INTEGER,
+            next_station_id INTEGER
         )
     ''')
 

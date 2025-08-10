@@ -182,19 +182,28 @@
     <svg class="metro-map" id="metroSVG" width="2000" height="520"></svg>
 
     <div class="tables-row">
-      <table class="arr-table">
-        <thead><tr><th>Time</th><th>Destination</th></tr></thead>
-        <tbody id="arr1"></tbody>
-      </table>
-      <table class="arr-table">
-        <thead><tr><th>Time</th><th>Destination</th></tr></thead>
-        <tbody id="arr2"></tbody>
-      </table>
+      <!-- Station 1 Tables -->
+      <div style="display: flex; flex-direction: column; align-items: center; gap: 15px;">
+        <h3 id="station1Title" style="margin: 0; font-size: 1.4rem; color: #2e2e5a;">Station 1</h3>
+        <div id="station1Tables" style="display: flex; gap: 20px;">
+          <!-- Tables will be dynamically generated based on station type -->
+        </div>
+      </div>
+      
+      <!-- Station 2 Tables -->
+      <div style="display: flex; flex-direction: column; align-items: center; gap: 15px;">
+        <h3 id="station2Title" style="margin: 0; font-size: 1.4rem; color: #2e2e5a;">Station 2</h3>
+        <div id="station2Tables" style="display: flex; gap: 20px;">
+          <!-- Tables will be dynamically generated based on station type -->
+        </div>
+      </div>
     </div>
   </div>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
   <script>
     let stations = [];
     let stationMap = {};
+    const socket = io();
 
     async function loadStations() {
       const res = await fetch('/stations');
@@ -438,14 +447,136 @@
       document.getElementById('duration').textContent = time.minutes !== undefined ? `${time.minutes} mins` : 'N/A';
     }
 
+    // Store arrival times - no more fake timers, use server data directly  
+    let stationArrivals = {};
+    let refreshInterval = null;
+
     async function fetchArrivals() {
       const from = stationMap[document.getElementById('fromStation').value];
       const to = stationMap[document.getElementById('toStation').value];
-      const arr1 = await fetch(`/arrivals?station_id=${from}`).then(res=>res.json());
-      const arr2 = await fetch(`/arrivals?station_id=${to}`).then(res=>res.json());
-      document.getElementById('arr1').innerHTML = arr1.map(r=>`<tr><td>${r.minutes}</td><td>${r.destination}</td></tr>`).join('');
-      document.getElementById('arr2').innerHTML = arr2.map(r=>`<tr><td>${r.minutes}</td><td>${r.destination}</td></tr>`).join('');
+      
+      if (!from || !to) return;
+      
+      // Update station titles
+      document.getElementById('station1Title').textContent = document.getElementById('fromStation').selectedOptions[0].text;
+      document.getElementById('station2Title').textContent = document.getElementById('toStation').selectedOptions[0].text;
+      
+      try {
+        // Get station info and real-time arrivals from server
+        const [station1Info, station2Info, arr1, arr2] = await Promise.all([
+          fetch(`/station_info?station_id=${from}`).then(res => res.json()),
+          fetch(`/station_info?station_id=${to}`).then(res => res.json()),
+          fetch(`/arrivals?station_id=${from}`).then(res => res.json()),
+          fetch(`/arrivals?station_id=${to}`).then(res => res.json())
+        ]);
+        
+        // Store current arrivals data
+        stationArrivals = {
+          station1: arr1,
+          station2: arr2,
+          station1Info,
+          station2Info
+        };
+        
+        // Display current data
+        createStationTables('station1Tables', station1Info, arr1);
+        createStationTables('station2Tables', station2Info, arr2);
+        
+        console.log(`Fetched ${arr1.length} arrivals for station 1, ${arr2.length} arrivals for station 2`);
+        
+      } catch (error) {
+        console.error('Error fetching arrivals:', error);
+      }
     }
+
+    function createStationTables(containerId, stationInfo, arrivals) {
+      const container = document.getElementById(containerId);
+      
+      if (stationInfo.is_lrt) {
+        // LRT station: show Gombak and Putra Heights directions
+        const gombakArrivals = arrivals.filter(a => a.destination.includes('Gombak')).slice(0, 3);
+        const putraArrivals = arrivals.filter(a => a.destination.includes('Putra Heights')).slice(0, 3);
+        
+        container.innerHTML = `
+          <div>
+            <h4 style="text-align: center; margin: 0 0 10px 0; color: #e53e3e; font-size: 1.1rem;">To Gombak</h4>
+            <table class="arr-table">
+              <thead><tr><th>Time</th><th>Platform</th></tr></thead>
+              <tbody>${gombakArrivals.length > 0 ? 
+                gombakArrivals.map(r => `<tr><td>${formatArrivalTime(r.minutes, r.seconds)}</td><td>Train ${r.train_id}</td></tr>`).join('') : 
+                '<tr><td colspan="2" style="text-align: center; color: #94a0bc;">No trains</td></tr>'}
+              </tbody>
+            </table>
+          </div>
+          <div>
+            <h4 style="text-align: center; margin: 0 0 10px 0; color: #e53e3e; font-size: 1.1rem;">To Putra Heights</h4>
+            <table class="arr-table">
+              <thead><tr><th>Time</th><th>Platform</th></tr></thead>
+              <tbody>${putraArrivals.length > 0 ? 
+                putraArrivals.map(r => `<tr><td>${formatArrivalTime(r.minutes, r.seconds)}</td><td>Train ${r.train_id}</td></tr>`).join('') : 
+                '<tr><td colspan="2" style="text-align: center; color: #94a0bc;">No trains</td></tr>'}
+              </tbody>
+            </table>
+          </div>
+        `;
+      } else if (stationInfo.is_mrt) {
+        // MRT station: show Sungai Buloh and Kajang directions
+        const bulohArrivals = arrivals.filter(a => a.destination.includes('Sungai Buloh')).slice(0, 3);
+        const kajangArrivals = arrivals.filter(a => a.destination.includes('Kajang')).slice(0, 3);
+        
+        container.innerHTML = `
+          <div>
+            <h4 style="text-align: center; margin: 0 0 10px 0; color: #38a169; font-size: 1.1rem;">To Sungai Buloh</h4>
+            <table class="arr-table">
+              <thead><tr><th>Time</th><th>Platform</th></tr></thead>
+              <tbody>${bulohArrivals.length > 0 ? 
+                bulohArrivals.map(r => `<tr><td>${formatArrivalTime(r.minutes, r.seconds)}</td><td>Train ${r.train_id}</td></tr>`).join('') : 
+                '<tr><td colspan="2" style="text-align: center; color: #94a0bc;">No trains</td></tr>'}
+              </tbody>
+            </table>
+          </div>
+          <div>
+            <h4 style="text-align: center; margin: 0 0 10px 0; color: #38a169; font-size: 1.1rem;">To Kajang</h4>
+            <table class="arr-table">
+              <thead><tr><th>Time</th><th>Platform</th></tr></thead>
+              <tbody>${kajangArrivals.length > 0 ? 
+                kajangArrivals.map(r => `<tr><td>${formatArrivalTime(r.minutes, r.seconds)}</td><td>Train ${r.train_id}</td></tr>`).join('') : 
+                '<tr><td colspan="2" style="text-align: center; color: #94a0bc;">No trains</td></tr>'}
+              </tbody>
+            </table>
+          </div>
+        `;
+      } else {
+        container.innerHTML = '<div style="text-align: center; color: #94a0bc;">Station type unknown</div>';
+      }
+    }
+
+    function formatArrivalTime(minutes, seconds) {
+      if (minutes === 0 && seconds <= 30) {
+        return '<span style="color: #e53e3e; font-weight: bold;">Arriving</span>';
+      } else if (minutes === 0 && seconds < 60) {
+        return '<span style="color: #f56500; font-weight: bold;">1 min</span>';
+      } else {
+        // Format as MM:SS
+        const formattedMinutes = minutes.toString();
+        const formattedSeconds = seconds.toString().padStart(2, '0');
+        return `${formattedMinutes}:${formattedSeconds}`;
+      }
+    }
+
+    // Socket.IO event handlers - refresh when real trains move
+    socket.on('train_update', function(data) {
+      console.log('Real train movement detected - refreshing arrivals');
+      fetchArrivals(); // Get updated real train positions
+    });
+
+    // Refresh arrivals regularly to get real-time data from server
+    setInterval(() => {
+      if (document.getElementById('fromStation').value && document.getElementById('toStation').value) {
+        console.log('Regular refresh - fetching current train positions');
+        fetchArrivals();
+      }
+    }, 3000); // Refresh every 3 seconds to show real train movement
 
     document.addEventListener('DOMContentLoaded', loadStations);
   </script>
