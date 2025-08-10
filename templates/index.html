@@ -76,13 +76,13 @@
     .dropdown:focus { border: 2px solid #4ba5ff; }
     /* Metro lines */
     .metro-map {
-      /* margin: 0px 0 44px 0; */
-      position: relative;
-      height: 520px;
-      width: 100%;
-      /* max-width: 1200px; */
-      background: none;
       display: block;
+      margin: 0 auto;
+    }
+    .metro-map-container {
+      display: flex;
+      justify-content: center;
+      align-items: center;
     }
     .station-dot {
       cursor: pointer;
@@ -179,7 +179,9 @@
       <select id="toStation" class="dropdown"></select>
     </div>
 
-    <svg class="metro-map" id="metroSVG" width="2000" height="520"></svg>
+    <div class="metro-map-container">
+      <svg class="metro-map" id="metroSVG" width="2000" height="520"></svg>
+    </div>
 
     <div class="tables-row">
       <!-- Station 1 Tables -->
