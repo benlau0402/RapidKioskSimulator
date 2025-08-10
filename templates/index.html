@@ -16,7 +16,7 @@
       min-height: 100vh;
     }
     .container {
-      max-width: 1120px;
+      /* max-width: 1120px; */
       margin: 0 auto;
       padding: 34px 20px 0 20px;
     }
@@ -29,9 +29,9 @@
       margin: 0 0 24px 0;
     }
     .summary-row {
-      display: flex; justify-content: space-between; margin-bottom: 40px; align-items: flex-end;
+      display: flex; justify-content: center; margin-bottom: 20px; align-items: flex-end;
       flex-wrap: wrap;
-      gap: 18px;
+      gap: 50px;
     }
     .summary-box {
       background: #fff;
@@ -51,7 +51,7 @@
     .summary-label { font-size: 1.2rem; color: #94a0bc; font-weight: 700; margin-bottom: 0.28em; letter-spacing:0.04em;}
     #fee, #duration { color: #2140c2; font-size:2.5rem; letter-spacing:0.03em; }
     .controls {
-      display: flex; justify-content: center; align-items: center; margin-bottom: 42px;
+      display: flex; justify-content: center; align-items: center;
       gap: 22px;
     }
     .dropdown {
@@ -76,11 +76,11 @@
     .dropdown:focus { border: 2px solid #4ba5ff; }
     /* Metro lines */
     .metro-map {
-      margin: 36px 0 44px 0;
+      /* margin: 0px 0 44px 0; */
       position: relative;
-      height: 265px;
+      height: 520px;
       width: 100%;
-      max-width: 1000px;
+      /* max-width: 1200px; */
       background: none;
       display: block;
     }
@@ -90,6 +90,15 @@
       stroke-width: 3.5;
       fill: #30b7e8;
       transition: fill 0.18s, stroke 0.2s;
+    }
+    .station-dot.lrt {
+      fill: #e53e3e;
+    }
+    .station-dot.mrt {
+      fill: #38a169;
+    }
+    .station-dot.interchange {
+      fill: #805ad5;
     }
     .station-dot.selected {
       fill: #FFA300;
@@ -108,6 +117,8 @@
       /* will be applied via JS for SVG */
     }
     .line-main { stroke: #30b7e8; stroke-width: 7; }
+    .line-lrt { stroke: #e53e3e; stroke-width: 7; }
+    .line-mrt { stroke: #38a169; stroke-width: 7; }
     /* Tables */
     .tables-row {
       display: flex;
@@ -142,7 +153,7 @@
     .arr-table tr:last-child td { border-bottom: none; }
     @media (max-width: 950px) {
       .tables-row { flex-direction: column; align-items: center; gap: 20px; }
-      .metro-map { height: 180px; }
+      .metro-map { height: 240px; }
       .container { padding: 18px; }
       .dropdown { min-width: 160px; }
     }
@@ -168,7 +179,7 @@
       <select id="toStation" class="dropdown"></select>
     </div>
 
-    <svg class="metro-map" id="metroSVG" width="1000" height="220"></svg>
+    <svg class="metro-map" id="metroSVG" width="2000" height="520"></svg>
 
     <div class="tables-row">
       <table class="arr-table">
@@ -211,31 +222,172 @@
     function renderMetroSVG() {
       const svg = document.getElementById('metroSVG');
       svg.innerHTML = '';
-      const y = 125;
-      const xStart = 65, xEnd = 960;
-      const n = stations.length;
+      
+      // Define line positions
+      const topLineY = 60; // Top line
+      const bottomLineY = 280; // Bottom line
+      const xStart = 65, xEnd = 1825;
       const labelAngle = -38; // degrees
-      svg.innerHTML += `<line class="line-main" x1="${xStart}" y1="${y}" x2="${xEnd}" y2="${y}"/>`;
-      stations.forEach((s, i) => {
-        let x = xStart + i*(xEnd-xStart)/(n-1);
-        svg.innerHTML += `<circle class="station-dot" cx="${x}" cy="${y}" r="13"
-          onclick="selectStation('${s.name}')" id="dot-${s.station_id}"/>`;
-        // Place rotated text below the dot
-        svg.innerHTML += `<g transform="translate(${x},${y+32}) rotate(${labelAngle})">
-          <text class="station-label">${s.name}</text></g>`;
+      const interchangeX = 1000; // Fixed position for Pasar Seni interchange
+      
+      // Define all stations in order with their line assignments
+      const allStations = [
+        // LRT stations (Putra Heights to Pasar Seni) - RED line, bottom position
+        { id: 37, name: 'Putra Heights (KJL)', line: 'lrt', isLeft: true },
+        { id: 36, name: 'Subang Alam', line: 'lrt', isLeft: true },
+        { id: 35, name: 'Alam Megah', line: 'lrt', isLeft: true },
+        { id: 34, name: 'USJ 21', line: 'lrt', isLeft: true },
+        { id: 33, name: 'Wawasan', line: 'lrt', isLeft: true },
+        { id: 32, name: 'Taipan', line: 'lrt', isLeft: true },
+        { id: 31, name: 'USJ 7 (KJL)', line: 'lrt', isLeft: true },
+        { id: 30, name: 'SS 18', line: 'lrt', isLeft: true },
+        { id: 29, name: 'SS 15', line: 'lrt', isLeft: true },
+        { id: 28, name: 'Subang Jaya', line: 'lrt', isLeft: true },
+        { id: 27, name: 'Glenmarie', line: 'lrt', isLeft: true },
+        { id: 26, name: 'Ara Damansara', line: 'lrt', isLeft: true },
+        { id: 25, name: 'Lembah Subang', line: 'lrt', isLeft: true },
+        { id: 24, name: 'Kelana Jaya', line: 'lrt', isLeft: true },
+        { id: 23, name: 'Taman Bahagia', line: 'lrt', isLeft: true },
+        { id: 22, name: 'Taman Paramount', line: 'lrt', isLeft: true },
+        { id: 21, name: 'Asia Jaya', line: 'lrt', isLeft: true },
+        { id: 20, name: 'Taman Jaya', line: 'lrt', isLeft: true },
+        { id: 19, name: 'Universiti', line: 'lrt', isLeft: true },
+        { id: 18, name: 'Kerinchi', line: 'lrt', isLeft: true },
+        { id: 17, name: 'Abdullah Hukum', line: 'lrt', isLeft: true },
+        { id: 16, name: 'Bangsar', line: 'lrt', isLeft: true },
+        { id: 15, name: 'KL Sentral (KJL)', line: 'lrt', isLeft: true },
+        
+        // MRT stations (Sungai Buloh to Pasar Seni) - GREEN line, top position
+        { id: 38, name: 'Sungai Buloh', line: 'mrt', isLeft: true },
+        { id: 39, name: 'Kampung Selamat', line: 'mrt', isLeft: true },
+        { id: 40, name: 'Kwasa Damansara', line: 'mrt', isLeft: true },
+        { id: 41, name: 'Kwasa Sentral', line: 'mrt', isLeft: true },
+        { id: 42, name: 'Kota Damansara', line: 'mrt', isLeft: true },
+        { id: 43, name: 'Surian', line: 'mrt', isLeft: true },
+        { id: 44, name: 'Mutiara Damansara', line: 'mrt', isLeft: true },
+        { id: 45, name: 'Bandar Utama', line: 'mrt', isLeft: true },
+        { id: 46, name: 'TTDI', line: 'mrt', isLeft: true },
+        { id: 47, name: 'Phileo Damansara', line: 'mrt', isLeft: true },
+        { id: 48, name: 'Pusat Bandar Damansara', line: 'mrt', isLeft: true },
+        { id: 49, name: 'Semantan', line: 'mrt', isLeft: true },
+        { id: 50, name: 'Muzium Negara', line: 'mrt', isLeft: true },
+        
+        // LRT stations (Pasar Seni to Gombak) - RED line, top position (after crossing)
+        { id: 13, name: 'Masjid Jamek (KJL)', line: 'lrt', isLeft: false },
+        { id: 12, name: 'Dang Wangi', line: 'lrt', isLeft: false },
+        { id: 11, name: 'Kampung Baru', line: 'lrt', isLeft: false },
+        { id: 10, name: 'KLCC', line: 'lrt', isLeft: false },
+        { id: 9, name: 'Ampang Park', line: 'lrt', isLeft: false },
+        { id: 8, name: 'Damai', line: 'lrt', isLeft: false },
+        { id: 7, name: 'Dato\' Keramat', line: 'lrt', isLeft: false },
+        { id: 6, name: 'Jelatek', line: 'lrt', isLeft: false },
+        { id: 5, name: 'Setiawangsa', line: 'lrt', isLeft: false },
+        { id: 4, name: 'Sri Rampai', line: 'lrt', isLeft: false },
+        { id: 3, name: 'Wangsa Maju', line: 'lrt', isLeft: false },
+        { id: 2, name: 'Taman Melati', line: 'lrt', isLeft: false },
+        { id: 1, name: 'Gombak', line: 'lrt', isLeft: false },
+        
+        // MRT stations (Pasar Seni to Kajang) - GREEN line, bottom position (after crossing)
+        { id: 52, name: 'Merdeka', line: 'mrt', isLeft: false },
+        { id: 53, name: 'Bukit Bintang', line: 'mrt', isLeft: false },
+        { id: 54, name: 'Tun Razak Exchange (TRX)', line: 'mrt', isLeft: false },
+        { id: 55, name: 'Cochrane', line: 'mrt', isLeft: false },
+        { id: 56, name: 'Maluri (SBK)', line: 'mrt', isLeft: false },
+        { id: 57, name: 'Taman Pertama', line: 'mrt', isLeft: false },
+        { id: 58, name: 'Taman Midah', line: 'mrt', isLeft: false },
+        { id: 59, name: 'Taman Mutiara', line: 'mrt', isLeft: false },
+        { id: 60, name: 'Taman Connaught', line: 'mrt', isLeft: false },
+        { id: 61, name: 'Taman Suntex', line: 'mrt', isLeft: false },
+        { id: 62, name: 'Sri Raya', line: 'mrt', isLeft: false },
+        { id: 63, name: 'Bandar Tun Hussein Onn', line: 'mrt', isLeft: false },
+        { id: 64, name: 'Batu 11 Cheras', line: 'mrt', isLeft: false },
+        { id: 65, name: 'Bukit Dukung', line: 'mrt', isLeft: false },
+        { id: 66, name: 'Sungai Jernih', line: 'mrt', isLeft: false },
+        { id: 67, name: 'Stadium Kajang', line: 'mrt', isLeft: false },
+        { id: 68, name: 'Kajang', line: 'mrt', isLeft: false }
+      ];
+      
+      // Draw lines
+      // LRT line - bottom left, top right
+      svg.innerHTML += `<line class="line-lrt" x1="${xStart}" y1="${bottomLineY}" x2="${interchangeX}" y2="${bottomLineY}"/>`;
+      svg.innerHTML += `<line class="line-lrt" x1="${interchangeX}" y1="${topLineY}" x2="${xEnd}" y2="${topLineY}"/>`;
+      
+      // MRT line - top left, bottom right
+      svg.innerHTML += `<line class="line-mrt" x1="${xStart}" y1="${topLineY}" x2="${interchangeX}" y2="${topLineY}"/>`;
+      svg.innerHTML += `<line class="line-mrt" x1="${interchangeX}" y1="${bottomLineY}" x2="${xEnd}" y2="${bottomLineY}"/>`;
+      
+      // Interchange crossing lines
+      svg.innerHTML += `<line class="line-main" x1="${interchangeX-30}" y1="${bottomLineY}" x2="${interchangeX+30}" y2="${topLineY}" stroke-width="4" stroke-dasharray="5,5"/>`;
+      svg.innerHTML += `<line class="line-main" x1="${interchangeX-30}" y1="${topLineY}" x2="${interchangeX+30}" y2="${bottomLineY}" stroke-width="4" stroke-dasharray="5,5"/>`;
+      
+      // Separate stations by line and position
+      const lrtLeft = allStations.filter(s => s.line === 'lrt' && s.isLeft);
+      const lrtRight = allStations.filter(s => s.line === 'lrt' && !s.isLeft);
+      const mrtLeft = allStations.filter(s => s.line === 'mrt' && s.isLeft);
+      const mrtRight = allStations.filter(s => s.line === 'mrt' && !s.isLeft);
+      
+      // Draw LRT stations (left side - bottom line)
+      lrtLeft.forEach((station, i) => {
+        const x = xStart + (i * (interchangeX - xStart) / lrtLeft.length);
+        svg.innerHTML += `<circle class="station-dot lrt" cx="${x}" cy="${bottomLineY}" r="13"
+          onclick="selectStation('${station.name}')" id="dot-${station.id}"/>`;
+        svg.innerHTML += `<g transform="translate(${x},${bottomLineY + 32}) rotate(${labelAngle})">
+          <text class="station-label">${station.name}</text></g>`;
       });
+      
+      // Draw LRT stations (right side - top line)
+      lrtRight.forEach((station, i) => {
+        const x = interchangeX + ((i + 1) * (1880 - interchangeX) / (lrtRight.length + 1));
+        svg.innerHTML += `<circle class="station-dot lrt" cx="${x}" cy="${topLineY}" r="13"
+          onclick="selectStation('${station.name}')" id="dot-${station.id}"/>`;
+        svg.innerHTML += `<g transform="translate(${x},${topLineY + 20}) rotate(${labelAngle})">
+          <text class="station-label">${station.name}</text></g>`;
+      });
+      
+      // Draw MRT stations (left side - top line)
+      mrtLeft.forEach((station, i) => {
+        const x = xStart + (i * (interchangeX - xStart) / mrtLeft.length);
+        svg.innerHTML += `<circle class="station-dot mrt" cx="${x}" cy="${topLineY}" r="13"
+          onclick="selectStation('${station.name}')" id="dot-${station.id}"/>`;
+        svg.innerHTML += `<g transform="translate(${x},${topLineY + 20}) rotate(${labelAngle})">
+          <text class="station-label">${station.name}</text></g>`;
+      });
+      
+      // Draw MRT stations (right side - bottom line)
+      mrtRight.forEach((station, i) => {
+        const x = interchangeX + ((i + 1) * (1865 - interchangeX) / (mrtRight.length + 1));
+        svg.innerHTML += `<circle class="station-dot mrt" cx="${x}" cy="${bottomLineY}" r="13"
+          onclick="selectStation('${station.name}')" id="dot-${station.id}"/>`;
+        svg.innerHTML += `<g transform="translate(${x},${bottomLineY + 32}) rotate(${labelAngle})">
+          <text class="station-label">${station.name}</text></g>`;
+      });
+      
+      // Draw interchange station (Pasar Seni)
+      svg.innerHTML += `<circle class="station-dot interchange" cx="${interchangeX}" cy="${(topLineY + bottomLineY) / 2}" r="15"
+        onclick="selectStation('Pasar Seni')" id="dot-pasar-seni"/>`;
+      svg.innerHTML += `<g transform="translate(${985},${175}) rotate(${36})">
+        <text class="station-label">Pasar Seni</text></g>`;
+      
       highlightSelectedDots();
     }
 
     function highlightSelectedDots() {
-      stations.forEach(s => {
-        const dot = document.getElementById('dot-' + s.station_id);
-        if (!dot) return;
-        if (s.name === document.getElementById('fromStation').value ||
-            s.name === document.getElementById('toStation').value) {
-          dot.classList.add('selected');
-        } else {
-          dot.classList.remove('selected');
+      // Get all station dots
+      const dots = document.querySelectorAll('.station-dot');
+      const fromStation = document.getElementById('fromStation').value;
+      const toStation = document.getElementById('toStation').value;
+      
+      dots.forEach(dot => {
+        // Get station name from the onclick attribute
+        const onclickAttr = dot.getAttribute('onclick');
+        const match = onclickAttr.match(/selectStation\('([^']+)'\)/);
+        if (match) {
+          const stationName = match[1];
+          if (stationName === fromStation || stationName === toStation) {
+            dot.classList.add('selected');
+          } else {
+            dot.classList.remove('selected');
+          }
         }
       });
     }
@@ -243,6 +395,13 @@
     window.selectStation = function(name) {
       const from = document.getElementById('fromStation');
       const to = document.getElementById('toStation');
+      
+      // Handle Pasar Seni selection - use the appropriate database name based on context
+      if (name === 'Pasar Seni') {
+        // For simplicity, default to Pasar Seni (KJL) but this could be improved
+        name = 'Pasar Seni (KJL)';
+      }
+      
       if (from.value === name) {
         to.value = name;
       } else {
