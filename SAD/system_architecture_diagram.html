@@ -1,0 +1,506 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RapidKioskSimulator - System Architecture Diagram</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            margin: 0;
+            font-size: 2.5em;
+            font-weight: 300;
+        }
+        
+        .header p {
+            margin: 10px 0 0 0;
+            opacity: 0.9;
+            font-size: 1.2em;
+        }
+        
+        .diagram-container {
+            padding: 40px;
+            background: #fafbfc;
+        }
+        
+        .architecture-layer {
+            margin: 30px 0;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        
+        .layer-header {
+            padding: 15px 25px;
+            font-weight: bold;
+            font-size: 1.3em;
+            color: white;
+            text-align: center;
+        }
+        
+        .frontend-layer .layer-header {
+            background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%);
+        }
+        
+        .communication-layer .layer-header {
+            background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);
+        }
+        
+        .backend-layer .layer-header {
+            background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%);
+        }
+        
+        .data-layer .layer-header {
+            background: linear-gradient(135deg, #a8e6cf 0%, #dcedc1 100%);
+        }
+        
+        .layer-content {
+            background: white;
+            padding: 25px;
+            display: grid;
+            gap: 20px;
+        }
+        
+        .frontend-layer .layer-content {
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        }
+        
+        .backend-layer .layer-content {
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        }
+        
+        .component {
+            background: #f8f9fa;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            padding: 20px;
+            position: relative;
+            transition: all 0.3s ease;
+        }
+        
+        .component:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+        }
+        
+        .component h3 {
+            margin: 0 0 15px 0;
+            color: #495057;
+            font-size: 1.2em;
+            border-bottom: 2px solid #dee2e6;
+            padding-bottom: 8px;
+        }
+        
+        .component ul {
+            margin: 0;
+            padding-left: 20px;
+            list-style-type: none;
+        }
+        
+        .component li {
+            margin: 8px 0;
+            position: relative;
+            color: #6c757d;
+        }
+        
+        .component li:before {
+            content: "▶";
+            position: absolute;
+            left: -15px;
+            color: #28a745;
+            font-size: 0.8em;
+        }
+        
+        .tech-stack {
+            background: #e3f2fd;
+            border-color: #90caf9;
+        }
+        
+        .tech-stack h3 {
+            color: #1976d2;
+        }
+        
+        .api-endpoints {
+            background: #f3e5f5;
+            border-color: #ce93d8;
+        }
+        
+        .api-endpoints h3 {
+            color: #7b1fa2;
+        }
+        
+        .data-flow {
+            background: #e8f5e8;
+            border-color: #a5d6a7;
+        }
+        
+        .data-flow h3 {
+            color: #388e3c;
+        }
+        
+        .flow-arrow {
+            text-align: center;
+            font-size: 2em;
+            color: #6c757d;
+            margin: 20px 0;
+            animation: bounce 2s infinite;
+        }
+        
+        @keyframes bounce {
+            0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+            40% { transform: translateY(-10px); }
+            60% { transform: translateY(-5px); }
+        }
+        
+        .database-schema {
+            background: #fff3e0;
+            border-color: #ffb74d;
+            grid-column: span 2;
+        }
+        
+        .database-schema h3 {
+            color: #ef6c00;
+        }
+        
+        .schema-table {
+            display: inline-block;
+            margin: 10px 15px 10px 0;
+            padding: 10px;
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 0.9em;
+        }
+        
+        .schema-table strong {
+            color: #d32f2f;
+        }
+        
+        .communication-flow {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin: 20px 0;
+        }
+        
+        .comm-box {
+            background: white;
+            border: 2px solid #17a2b8;
+            border-radius: 8px;
+            padding: 15px;
+            text-align: center;
+            flex: 1;
+            margin: 0 10px;
+            color: #17a2b8;
+            font-weight: bold;
+        }
+        
+        .comm-arrow {
+            font-size: 1.5em;
+            color: #17a2b8;
+        }
+        
+        @media (max-width: 768px) {
+            .layer-content {
+                grid-template-columns: 1fr !important;
+            }
+            
+            .database-schema {
+                grid-column: span 1;
+            }
+            
+            .communication-flow {
+                flex-direction: column;
+            }
+            
+            .comm-box {
+                margin: 10px 0;
+            }
+            
+            .comm-arrow {
+                transform: rotate(90deg);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>RapidKioskSimulator</h1>
+            <p>System Architecture Diagram</p>
+        </div>
+        
+        <div class="diagram-container">
+            <!-- Frontend Layer -->
+            <div class="architecture-layer frontend-layer">
+                <div class="layer-header">
+                    🖥️ Frontend Layer (Client-Side)
+                </div>
+                <div class="layer-content">
+                    <div class="component">
+                        <h3>User Interface Components</h3>
+                        <ul>
+                            <li>Header & Branding</li>
+                            <li>Summary Panel (Fare & Duration)</li>
+                            <li>Station Selector Dropdowns</li>
+                            <li>Interactive Metro Map (SVG)</li>
+                            <li>Real-time Arrival Tables</li>
+                            <li>Responsive Design Layout</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="component tech-stack">
+                        <h3>Frontend Technologies</h3>
+                        <ul>
+                            <li>HTML5 + CSS3</li>
+                            <li>Vanilla JavaScript (ES6+)</li>
+                            <li>Socket.IO Client</li>
+                            <li>SVG Graphics</li>
+                            <li>Responsive Grid/Flexbox</li>
+                            <li>WebSocket API</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="component">
+                        <h3>Interactive Features</h3>
+                        <ul>
+                            <li>Click-to-select stations</li>
+                            <li>Visual route highlighting</li>
+                            <li>Real-time countdown timers</li>
+                            <li>Dynamic table updates</li>
+                            <li>Station type color coding</li>
+                            <li>Mobile-friendly interface</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Communication Layer -->
+            <div class="architecture-layer communication-layer">
+                <div class="layer-header">
+                    🔄 Communication Layer
+                </div>
+                <div class="layer-content">
+                    <div class="communication-flow">
+                        <div class="comm-box">Frontend<br>Socket.IO Client</div>
+                        <div class="comm-arrow">↔️</div>
+                        <div class="comm-box">WebSocket<br>Real-time Events</div>
+                        <div class="comm-arrow">↔️</div>
+                        <div class="comm-box">Backend<br>Socket.IO Server</div>
+                    </div>
+                    
+                    <div class="component data-flow">
+                        <h3>Data Flow Patterns</h3>
+                        <ul>
+                            <li><strong>Static Data:</strong> CSV → Database → REST API → Frontend</li>
+                            <li><strong>Real-time Data:</strong> Train Simulation → WebSocket → Live Updates</li>
+                            <li><strong>User Interaction:</strong> UI Input → API Request → Database Query → JSON Response</li>
+                            <li><strong>Event Broadcasting:</strong> Train Movement → All Connected Clients</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="flow-arrow">⬇️</div>
+            
+            <!-- Backend Layer -->
+            <div class="architecture-layer backend-layer">
+                <div class="layer-header">
+                    ⚙️ Backend Layer (Server-Side)
+                </div>
+                <div class="layer-content">
+                    <div class="component">
+                        <h3>Core Application (app.py)</h3>
+                        <ul>
+                            <li>Flask Web Server</li>
+                            <li>Flask-SocketIO Integration</li>
+                            <li>Blueprint Registration</li>
+                            <li>Template Rendering</li>
+                            <li>WebSocket Event Hub</li>
+                            <li>Host: 0.0.0.0:5001</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="component api-endpoints">
+                        <h3>REST API Layer (routes.py)</h3>
+                        <ul>
+                            <li>GET /stations - All metro stations</li>
+                            <li>GET /fare - Calculate journey fare</li>
+                            <li>GET /time - Travel time calculation</li>
+                            <li>GET /routecode - Route identification</li>
+                            <li>GET /arrivals - Real-time arrivals</li>
+                            <li>GET /station_info - Station metadata</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="component">
+                        <h3>Train Simulation Engine</h3>
+                        <ul>
+                            <li>44 LRT Trains (Gombak ↔ Putra Heights)</li>
+                            <li>62 MRT Trains (Sungai Buloh ↔ Kajang)</li>
+                            <li>Continuous movement simulation</li>
+                            <li>Real-time position tracking</li>
+                            <li>Background threading</li>
+                            <li>Arrival time calculations</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="component">
+                        <h3>Real-time Updates (realtime.py)</h3>
+                        <ul>
+                            <li>WebSocket event handling</li>
+                            <li>Train position broadcasting</li>
+                            <li>Dynamic arrival updates</li>
+                            <li>Database synchronization</li>
+                            <li>Client notification system</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="component tech-stack">
+                        <h3>Backend Technology Stack</h3>
+                        <ul>
+                            <li>Flask 2.2+ (Web Framework)</li>
+                            <li>Flask-SocketIO 5.3+ (WebSocket)</li>
+                            <li>SQLite3 (Database)</li>
+                            <li>Pandas 2.0+ (Data Processing)</li>
+                            <li>Threading (Async Operations)</li>
+                            <li>Eventlet (Real-time Support)</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="flow-arrow">⬇️</div>
+            
+            <!-- Data Layer -->
+            <div class="architecture-layer data-layer">
+                <div class="layer-header">
+                    🗄️ Data Layer
+                </div>
+                <div class="layer-content">
+                    <div class="component">
+                        <h3>Data Sources</h3>
+                        <ul>
+                            <li><strong>Fare.csv</strong> - Fare matrix between stations</li>
+                            <li><strong>Time.csv</strong> - Travel time matrix</li>
+                            <li><strong>Route.csv</strong> - Route codes and paths</li>
+                            <li>Static transit network data</li>
+                            <li>Station metadata and classifications</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="component">
+                        <h3>Database Management (database.py)</h3>
+                        <ul>
+                            <li>CSV to SQLite transformation</li>
+                            <li>Database initialization</li>
+                            <li>Station mapping (68 total stations)</li>
+                            <li>Data validation and integrity</li>
+                            <li>Connection management</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="component database-schema">
+                        <h3>Database Schema (SQLite)</h3>
+                        <div class="schema-table">
+                            <strong>stations</strong><br>
+                            station_id (PK)<br>
+                            name
+                        </div>
+                        <div class="schema-table">
+                            <strong>fares</strong><br>
+                            origin_id<br>
+                            destination_id<br>
+                            price
+                        </div>
+                        <div class="schema-table">
+                            <strong>times</strong><br>
+                            origin_id<br>
+                            destination_id<br>
+                            minutes
+                        </div>
+                        <div class="schema-table">
+                            <strong>routes</strong><br>
+                            origin_id<br>
+                            destination_id<br>
+                            route_code
+                        </div>
+                        <div class="schema-table">
+                            <strong>arrivals</strong><br>
+                            station_id<br>
+                            train_id<br>
+                            minutes<br>
+                            destination_id<br>
+                            arrival_timestamp
+                        </div>
+                        <div class="schema-table">
+                            <strong>trains</strong><br>
+                            train_id (PK)<br>
+                            line<br>
+                            direction<br>
+                            current_station_id<br>
+                            next_station_id
+                        </div>
+                    </div>
+                    
+                    <div class="component">
+                        <h3>Station Classification</h3>
+                        <ul>
+                            <li><strong>LRT Stations:</strong> IDs 1-37 (Kelana Jaya Line)</li>
+                            <li><strong>MRT Stations:</strong> IDs 38-68 (Sungai Buloh-Kajang Line)</li>
+                            <li><strong>Interchange:</strong> Pasar Seni (connects both lines)</li>
+                            <li>Total: 68 stations across both lines</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            
+            <div style="margin-top: 40px; padding: 30px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 10px; color: white; text-align: center;">
+                <h2 style="margin: 0 0 15px 0;">Key Architecture Features</h2>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; margin-top: 20px;">
+                    <div>
+                        <h4>🚀 Real-time Updates</h4>
+                        <p>Live train positions and arrival times via WebSocket</p>
+                    </div>
+                    <div>
+                        <h4>📱 Responsive Design</h4>
+                        <p>Mobile-friendly interface with adaptive layout</p>
+                    </div>
+                    <div>
+                        <h4>🎯 Interactive Map</h4>
+                        <p>SVG-based metro map with click-to-select functionality</p>
+                    </div>
+                    <div>
+                        <h4>⚡ Performance Optimized</h4>
+                        <p>Efficient database queries and minimal API calls</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
