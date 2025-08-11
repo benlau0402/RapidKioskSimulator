@@ -1,0 +1,219 @@
+RapidKioskSimulator - Database ERD (Entity Relationship Diagram)
+================================================================
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                          RAPIDKIOSKSIMULATOR DATABASE ERD                  │
+│                                   (6 Tables)                               │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+                              ┌─────────────────────┐
+                              │      STATIONS       │
+                              │                     │
+                              │ ┌─────────────────┐ │
+                              │ │  station_id PK  │ │ ◄──────┐
+                              │ │  name           │ │        │
+                              │ └─────────────────┘ │        │
+                              └─────────────────────┘        │
+                                        │                    │
+                        ┌───────────────┼───────────────┐    │
+                        │               │               │    │
+                        ▼               ▼               ▼    │
+              ┌─────────────────┐ ┌─────────────────┐ ┌─────────────────┐
+              │     FARES       │ │     TIMES       │ │     ROUTES      │
+              │                 │ │                 │ │                 │
+              │ ┌─────────────┐ │ │ ┌─────────────┐ │ │ ┌─────────────┐ │
+              │ │ origin_id   │ │ │ │ origin_id   │ │ │ │ origin_id   │ │
+              │ │destination_id│ │ │ │destination_id│ │ │ │destination_id│ │
+              │ │ price       │ │ │ │ minutes     │ │ │ │ route_code  │ │
+              │ └─────────────┘ │ │ └─────────────┘ │ │ └─────────────┘ │
+              └─────────────────┘ └─────────────────┘ └─────────────────┘
+                      ▲                   ▲                   ▲
+                      │                   │                   │
+                      └───────────────────┼───────────────────┘
+                                          │
+                              Foreign Key Relationships
+                              origin_id → stations.station_id
+                              destination_id → stations.station_id
+
+═══════════════════════════════════════════════════════════════════════════════
+
+                              ┌─────────────────────┐
+                              │       TRAINS        │
+                              │                     │
+                              │ ┌─────────────────┐ │
+                              │ │   train_id PK   │ │ ◄──────┐
+                              │ │   line          │ │        │
+                              │ │   direction     │ │        │
+                              │ │current_station_id│ │───┐    │
+                              │ │next_station_id  │ │───┼────┘
+                              │ └─────────────────┘ │   │
+                              └─────────────────────┘   │
+                                        │               │
+                                        │               │
+                                        ▼               ▼
+                              ┌─────────────────────┐   │
+                              │     ARRIVALS        │   │
+                              │                     │   │
+                              │ ┌─────────────────┐ │   │
+                              │ │  station_id     │ │◄──┘
+                              │ │  train_id       │ │◄──────┘
+                              │ │  minutes        │ │
+                              │ │ destination_id  │ │◄──────────────┐
+                              │ │arrival_timestamp│ │               │
+                              │ └─────────────────┘ │               │
+                              └─────────────────────┘               │
+                                                                    │
+                              Foreign Key Relationships             │
+                              station_id → stations.station_id ─────┘
+                              train_id → trains.train_id
+                              destination_id → stations.station_id
+
+═══════════════════════════════════════════════════════════════════════════════
+
+RELATIONSHIP SUMMARY:
+═══════════════════
+
+┌─────────────────┬──────────────┬─────────────────────────────────────────┐
+│  TABLE          │ CARDINALITY  │             RELATIONSHIP                │
+├─────────────────┼──────────────┼─────────────────────────────────────────┤
+│ STATIONS        │    1 : M     │ One station has many fares (origin)    │
+│    ↕            │              │                                         │
+│ FARES           │              │                                         │
+├─────────────────┼──────────────┼─────────────────────────────────────────┤
+│ STATIONS        │    1 : M     │ One station has many times (origin)    │
+│    ↕            │              │                                         │
+│ TIMES           │              │                                         │
+├─────────────────┼──────────────┼─────────────────────────────────────────┤
+│ STATIONS        │    1 : M     │ One station has many routes (origin)   │
+│    ↕            │              │                                         │
+│ ROUTES          │              │                                         │
+├─────────────────┼──────────────┼─────────────────────────────────────────┤
+│ STATIONS        │    1 : M     │ One station has many arrivals          │
+│    ↕            │              │                                         │
+│ ARRIVALS        │              │                                         │
+├─────────────────┼──────────────┼─────────────────────────────────────────┤
+│ TRAINS          │    1 : M     │ One train has many arrivals             │
+│    ↕            │              │                                         │
+│ ARRIVALS        │              │                                         │
+├─────────────────┼──────────────┼─────────────────────────────────────────┤
+│ STATIONS        │    1 : M     │ One station is current for many trains │
+│    ↕            │              │                                         │
+│ TRAINS          │              │                                         │
+└─────────────────┴──────────────┴─────────────────────────────────────────┘
+
+FOREIGN KEY CONSTRAINTS:
+══════════════════════
+
+FARES Table:
+├─ origin_id → STATIONS.station_id
+└─ destination_id → STATIONS.station_id
+
+TIMES Table:
+├─ origin_id → STATIONS.station_id  
+└─ destination_id → STATIONS.station_id
+
+ROUTES Table:
+├─ origin_id → STATIONS.station_id
+└─ destination_id → STATIONS.station_id
+
+ARRIVALS Table:
+├─ station_id → STATIONS.station_id
+├─ train_id → TRAINS.train_id
+└─ destination_id → STATIONS.station_id
+
+TRAINS Table:
+├─ current_station_id → STATIONS.station_id
+└─ next_station_id → STATIONS.station_id
+
+═══════════════════════════════════════════════════════════════════════════════
+
+TABLE DETAILS:
+═════════════
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                                STATIONS                                     │
+├─────────────────────────────────────────────────────────────────────────────┤
+│ Field Name    │ Data Type     │ Constraints   │ Description                 │
+├─────────────────────────────────────────────────────────────────────────────┤
+│ station_id    │ INTEGER       │ PRIMARY KEY   │ Unique station identifier   │
+│ name          │ TEXT          │ NOT NULL      │ Station name                │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                                  FARES                                      │
+├─────────────────────────────────────────────────────────────────────────────┤
+│ Field Name     │ Data Type    │ Constraints   │ Description                 │
+├─────────────────────────────────────────────────────────────────────────────┤
+│ origin_id      │ INTEGER      │ FOREIGN KEY   │ Origin station ID           │
+│ destination_id │ INTEGER      │ FOREIGN KEY   │ Destination station ID      │
+│ price          │ REAL         │               │ Fare price (RM)             │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                                  TIMES                                      │
+├─────────────────────────────────────────────────────────────────────────────┤
+│ Field Name     │ Data Type    │ Constraints   │ Description                 │
+├─────────────────────────────────────────────────────────────────────────────┤
+│ origin_id      │ INTEGER      │ FOREIGN KEY   │ Origin station ID           │
+│ destination_id │ INTEGER      │ FOREIGN KEY   │ Destination station ID      │
+│ minutes        │ INTEGER      │               │ Travel time in minutes      │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                                 ROUTES                                      │
+├─────────────────────────────────────────────────────────────────────────────┤
+│ Field Name     │ Data Type    │ Constraints   │ Description                 │
+├─────────────────────────────────────────────────────────────────────────────┤
+│ origin_id      │ INTEGER      │ FOREIGN KEY   │ Origin station ID           │
+│ destination_id │ INTEGER      │ FOREIGN KEY   │ Destination station ID      │
+│ route_code     │ TEXT         │               │ Route identifier code       │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                                 TRAINS                                      │
+├─────────────────────────────────────────────────────────────────────────────┤
+│ Field Name          │ Data Type │ Constraints   │ Description               │
+├─────────────────────────────────────────────────────────────────────────────┤
+│ train_id            │ INTEGER   │ PRIMARY KEY   │ Unique train identifier   │
+│ line                │ TEXT      │               │ LRT or MRT                │
+│ direction           │ TEXT      │               │ Train direction           │
+│ current_station_id  │ INTEGER   │ FOREIGN KEY   │ Current station location  │
+│ next_station_id     │ INTEGER   │ FOREIGN KEY   │ Next station destination  │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                                ARRIVALS                                     │
+├─────────────────────────────────────────────────────────────────────────────┤
+│ Field Name        │ Data Type │ Constraints   │ Description                 │
+├─────────────────────────────────────────────────────────────────────────────┤
+│ station_id        │ INTEGER   │ FOREIGN KEY   │ Arrival station ID          │
+│ train_id          │ INTEGER   │ FOREIGN KEY   │ Train identifier            │
+│ minutes           │ INTEGER   │               │ Minutes until arrival       │
+│ destination_id    │ INTEGER   │ FOREIGN KEY   │ Train final destination     │
+│ arrival_timestamp │ REAL      │               │ Exact arrival time          │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+═══════════════════════════════════════════════════════════════════════════════
+
+BUSINESS LOGIC SUMMARY:
+═════════════════════
+
+1. STATIONS (Master Table):
+   - Contains all 68 stations (37 LRT + 31 MRT)
+   - Referenced by all other tables
+
+2. FARES, TIMES, ROUTES (Static Reference Tables):
+   - Store precomputed journey information between station pairs
+   - Enable fast lookup for fare calculation and route planning
+
+3. TRAINS (Active Entities):
+   - Represents 106 trains (44 LRT + 62 MRT)
+   - Tracks current position and movement direction
+   - Links to stations for location tracking
+
+4. ARRIVALS (Dynamic Real-time Table):
+   - Generated dynamically by train simulation
+   - Provides real-time arrival predictions
+   - Links trains to their arrival stations and destinations
+
+═══════════════════════════════════════════════════════════════════════════════
