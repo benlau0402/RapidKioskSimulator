@@ -119,6 +119,8 @@
     .line-main { stroke: #30b7e8; stroke-width: 7; }
     .line-lrt { stroke: #e53e3e; stroke-width: 7; }
     .line-mrt { stroke: #38a169; stroke-width: 7; }
+    .route-highlight { stroke: #FFA300; stroke-width: 20; opacity: 1.0; stroke-linecap: round; pointer-events: none; }
+    .route-segment { stroke: #FFA300; stroke-width: 20; opacity: 1.0; stroke-linecap: round; pointer-events: none; }
     /* Tables */
     .tables-row {
       display: flex;
@@ -320,16 +322,16 @@
       
       // Draw lines
       // LRT line - bottom left, top right
-      svg.innerHTML += `<line class="line-lrt" x1="${xStart}" y1="${bottomLineY}" x2="${interchangeX}" y2="${bottomLineY}"/>`;
-      svg.innerHTML += `<line class="line-lrt" x1="${interchangeX}" y1="${topLineY}" x2="${xEnd}" y2="${topLineY}"/>`;
+      svg.innerHTML += `<line class="line-lrt" x1="${xStart}" y1="${bottomLineY}" x2="${interchangeX - 40}" y2="${bottomLineY}"/>`;
+      svg.innerHTML += `<line class="line-lrt" x1="${interchangeX + 50}" y1="${topLineY}" x2="${xEnd}" y2="${topLineY}"/>`;
       
       // MRT line - top left, bottom right
-      svg.innerHTML += `<line class="line-mrt" x1="${xStart}" y1="${topLineY}" x2="${interchangeX}" y2="${topLineY}"/>`;
-      svg.innerHTML += `<line class="line-mrt" x1="${interchangeX}" y1="${bottomLineY}" x2="${xEnd}" y2="${bottomLineY}"/>`;
+      svg.innerHTML += `<line class="line-mrt" x1="${xStart}" y1="${topLineY}" x2="${interchangeX - 70}" y2="${topLineY}"/>`;
+      svg.innerHTML += `<line class="line-mrt" x1="${interchangeX + 60}" y1="${bottomLineY}" x2="${xEnd}" y2="${bottomLineY}"/>`;
       
       // Interchange crossing lines
-      svg.innerHTML += `<line class="line-main" x1="${interchangeX-30}" y1="${bottomLineY}" x2="${interchangeX+30}" y2="${topLineY}" stroke-width="4" stroke-dasharray="5,5"/>`;
-      svg.innerHTML += `<line class="line-main" x1="${interchangeX-30}" y1="${topLineY}" x2="${interchangeX+30}" y2="${bottomLineY}" stroke-width="4" stroke-dasharray="5,5"/>`;
+      svg.innerHTML += `<line class="line-main" x1="${interchangeX-30}" y1="${bottomLineY}" x2="${interchangeX+57}" y2="${topLineY}" stroke-width="4" stroke-dasharray="5,5"/>`;
+      svg.innerHTML += `<line class="line-main" x1="${interchangeX-60}" y1="${topLineY}" x2="${interchangeX+37}" y2="${bottomLineY}" stroke-width="4" stroke-dasharray="5,5"/>`;
       
       // Separate stations by line and position
       const lrtLeft = allStations.filter(s => s.line === 'lrt' && s.isLeft);
@@ -374,9 +376,9 @@
       });
       
       // Draw interchange station (Pasar Seni)
-      svg.innerHTML += `<circle class="station-dot interchange" cx="${interchangeX}" cy="${(topLineY + bottomLineY) / 2}" r="15"
+      svg.innerHTML += `<circle class="station-dot interchange" cx="${interchangeX}" cy="${((topLineY + bottomLineY) + 50) / 2}" r="15"
         onclick="selectStation('Pasar Seni')" id="dot-pasar-seni"/>`;
-      svg.innerHTML += `<g transform="translate(${985},${175}) rotate(${36})">
+      svg.innerHTML += `<g transform="translate(${980},${200}) rotate(${36})">
         <text class="station-label">Pasar Seni</text></g>`;
       
       highlightSelectedDots();
@@ -401,6 +403,182 @@
           }
         }
       });
+      
+      // Highlight the route between selected stations
+      highlightRoute(fromStation, toStation);
+    }
+
+    function highlightRoute(fromStation, toStation) {
+      // Remove existing route highlights
+      const existingHighlights = document.querySelectorAll('.route-segment');
+      existingHighlights.forEach(segment => segment.remove());
+      
+      if (!fromStation || !toStation || fromStation === toStation) {
+        return;
+      }
+      
+      // Define station sequences and their coordinates
+      const topLineY = 60;
+      const bottomLineY = 280;
+      const xStart = 65;
+      const interchangeX = 1000;
+      
+      // LRT stations sequence (Putra Heights to Gombak)
+      const lrtSequence = [
+        'Putra Heights (KJL)', 'Subang Alam', 'Alam Megah', 'USJ 21', 'Wawasan', 'Taipan', 
+        'USJ 7 (KJL)', 'SS 18', 'SS 15', 'Subang Jaya', 'Glenmarie', 'Ara Damansara', 
+        'Lembah Subang', 'Kelana Jaya', 'Taman Bahagia', 'Taman Paramount', 'Asia Jaya', 
+        'Taman Jaya', 'Universiti', 'Kerinchi', 'Abdullah Hukum', 'Bangsar', 'KL Sentral (KJL)', 
+        'Pasar Seni (KJL)', 'Masjid Jamek (KJL)', 'Dang Wangi', 'Kampung Baru', 'KLCC', 
+        'Ampang Park', 'Damai', 'Dato\' Keramat', 'Jelatek', 'Setiawangsa', 'Sri Rampai', 
+        'Wangsa Maju', 'Taman Melati', 'Gombak'
+      ];
+      
+      // MRT stations sequence (Sungai Buloh to Kajang)
+      const mrtSequence = [
+        'Sungai Buloh', 'Kampung Selamat', 'Kwasa Damansara', 'Kwasa Sentral', 'Kota Damansara', 
+        'Surian', 'Mutiara Damansara', 'Bandar Utama', 'TTDI', 'Phileo Damansara', 
+        'Pusat Bandar Damansara', 'Semantan', 'Muzium Negara', 'Pasar Seni (SBK)', 'Merdeka', 
+        'Bukit Bintang', 'Tun Razak Exchange (TRX)', 'Cochrane', 'Maluri (SBK)', 'Taman Pertama', 
+        'Taman Midah', 'Taman Mutiara', 'Taman Connaught', 'Taman Suntex', 'Sri Raya', 
+        'Bandar Tun Hussein Onn', 'Batu 11 Cheras', 'Bukit Dukung', 'Sungai Jernih', 
+        'Stadium Kajang', 'Kajang'
+      ];
+      
+      // Handle special Pasar Seni case
+      let fromStationName = fromStation === 'Pasar Seni' ? 'Pasar Seni (KJL)' : fromStation;
+      let toStationName = toStation === 'Pasar Seni' ? 'Pasar Seni (KJL)' : toStation;
+      
+      // Determine which lines the stations are on
+      const fromIsLRT = lrtSequence.includes(fromStationName);
+      const toIsLRT = lrtSequence.includes(toStationName);
+      const fromIsMRT = mrtSequence.includes(fromStationName);
+      const toIsMRT = mrtSequence.includes(toStationName);
+      
+      const svg = document.getElementById('metroSVG');
+      
+      if (fromIsLRT && toIsLRT) {
+        // Both on LRT line
+        drawLRTRoute(svg, fromStationName, toStationName, lrtSequence, topLineY, bottomLineY, xStart, interchangeX);
+      } else if (fromIsMRT && toIsMRT) {
+        // Both on MRT line
+        drawMRTRoute(svg, fromStationName, toStationName, mrtSequence, topLineY, bottomLineY, xStart, interchangeX);
+      } else {
+        // Transfer between lines
+        drawTransferRoute(svg, fromStationName, toStationName, fromIsLRT, lrtSequence, mrtSequence, topLineY, bottomLineY, xStart, interchangeX);
+      }
+    }
+    
+    function drawLRTRoute(svg, fromStation, toStation, sequence, topLineY, bottomLineY, xStart, interchangeX) {
+      const fromIndex = sequence.indexOf(fromStation);
+      const toIndex = sequence.indexOf(toStation);
+      
+      if (fromIndex === -1 || toIndex === -1) return;
+      
+      const startIndex = Math.min(fromIndex, toIndex);
+      const endIndex = Math.max(fromIndex, toIndex);
+      
+      const pasarSeniIndex = sequence.indexOf('Pasar Seni (KJL)');
+      const lrtLeftCount = 23; // Stations before Pasar Seni
+      const lrtRightCount = 13; // Stations after Pasar Seni (Gombak to Masjid Jamek)
+      
+      for (let i = startIndex; i <= endIndex - 1; i++) {
+        let currentPos, nextPos;
+        
+        if (i < pasarSeniIndex) {
+          // Left side (bottom line) - matches actual station rendering
+          const x1 = xStart + (i * (interchangeX - xStart) / lrtLeftCount);
+          const x2 = xStart + ((i + 1) * (interchangeX - xStart) / lrtLeftCount);
+          currentPos = { x: x1, y: bottomLineY };
+          nextPos = { x: x2, y: i + 1 === pasarSeniIndex ? ((topLineY +30) + bottomLineY) / 2 : bottomLineY };
+        } else if (i === pasarSeniIndex) {
+          // Crossing at Pasar Seni
+          currentPos = { x: interchangeX, y: (topLineY + (bottomLineY +30 )) / 2 };
+          // First right station position (matches actual rendering formula)
+          const nextX = interchangeX + ((0 + 1) * (1880 - interchangeX) / (lrtRightCount + 1));
+          nextPos = { x: nextX, y: topLineY };
+        } else {
+          // Right side (top line) - matches actual station rendering
+          const rightIndex = i - pasarSeniIndex - 1;
+          const x1 = interchangeX + ((rightIndex + 1) * (1880 - interchangeX) / (lrtRightCount + 1));
+          const x2 = interchangeX + ((rightIndex + 2) * (1880 - interchangeX) / (lrtRightCount + 1));
+          currentPos = { x: x1, y: topLineY };
+          nextPos = { x: x2, y: topLineY };
+        }
+        
+        drawRouteSegment(svg, currentPos, nextPos);
+      }
+    }
+    
+    function drawMRTRoute(svg, fromStation, toStation, sequence, topLineY, bottomLineY, xStart, interchangeX) {
+      const fromIndex = sequence.indexOf(fromStation);
+      const toIndex = sequence.indexOf(toStation);
+      
+      if (fromIndex === -1 || toIndex === -1) return;
+      
+      const startIndex = Math.min(fromIndex, toIndex);
+      const endIndex = Math.max(fromIndex, toIndex);
+      
+      const pasarSeniIndex = sequence.indexOf('Pasar Seni (SBK)');
+      const mrtLeftCount = 13; // Stations before Pasar Seni
+      const mrtRightCount = 17; // Stations after Pasar Seni (Kajang to Merdeka)
+      
+      for (let i = startIndex; i <= endIndex - 1; i++) {
+        let currentPos, nextPos;
+        
+        if (i < pasarSeniIndex) {
+          // Left side (top line) - matches actual station rendering
+          const x1 = xStart + (i * (interchangeX - xStart) / mrtLeftCount);
+          const x2 = xStart + ((i + 1) * (interchangeX - xStart) / mrtLeftCount);
+          currentPos = { x: x1, y: topLineY };
+          nextPos = { x: x2, y: i + 1 === pasarSeniIndex ? (topLineY + (bottomLineY +30)) / 2 : topLineY };
+        } else if (i === pasarSeniIndex) {
+          // Crossing at Pasar Seni
+          currentPos = { x: interchangeX, y: ((topLineY + 30) + bottomLineY) / 2 };
+          // First right station position (matches actual rendering formula)
+          const nextX = interchangeX + ((0 + 1) * (1865 - interchangeX) / (mrtRightCount + 1));
+          nextPos = { x: nextX, y: bottomLineY };
+        } else {
+          // Right side (bottom line) - matches actual station rendering
+          const rightIndex = i - pasarSeniIndex - 1;
+          const x1 = interchangeX + ((rightIndex + 1) * (1865 - interchangeX) / (mrtRightCount + 1));
+          const x2 = interchangeX + ((rightIndex + 2) * (1865 - interchangeX) / (mrtRightCount + 1));
+          currentPos = { x: x1, y: bottomLineY };
+          nextPos = { x: x2, y: bottomLineY };
+        }
+        
+        drawRouteSegment(svg, currentPos, nextPos);
+      }
+    }
+    
+    function drawTransferRoute(svg, fromStation, toStation, fromIsLRT, lrtSequence, mrtSequence, topLineY, bottomLineY, xStart, interchangeX) {
+      if (fromIsLRT) {
+        // LRT to MRT transfer
+        drawLRTRoute(svg, fromStation, 'Pasar Seni (KJL)', lrtSequence, topLineY, bottomLineY, xStart, interchangeX);
+        drawMRTRoute(svg, 'Pasar Seni (SBK)', toStation, mrtSequence, topLineY, bottomLineY, xStart, interchangeX);
+      } else {
+        // MRT to LRT transfer
+        drawMRTRoute(svg, fromStation, 'Pasar Seni (SBK)', mrtSequence, topLineY, bottomLineY, xStart, interchangeX);
+        drawLRTRoute(svg, 'Pasar Seni (KJL)', toStation, lrtSequence, topLineY, bottomLineY, xStart, interchangeX);
+      }
+    }
+    
+    
+    function drawRouteSegment(svg, fromPos, toPos) {
+      const routeSegment = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+      routeSegment.setAttribute('class', 'route-segment');
+      routeSegment.setAttribute('x1', fromPos.x);
+      routeSegment.setAttribute('y1', fromPos.y);
+      routeSegment.setAttribute('x2', toPos.x);
+      routeSegment.setAttribute('y2', toPos.y);
+      
+      // Insert route segments before station dots (so they appear behind)
+      const firstStation = svg.querySelector('.station-dot');
+      if (firstStation) {
+        svg.insertBefore(routeSegment, firstStation);
+      } else {
+        svg.appendChild(routeSegment);
+      }
     }
 
     window.selectStation = function(name) {
