@@ -16,10 +16,11 @@ Follow the steps below to install them:
    python -m venv venv
 
    Activate it:
-        Windows:
+   
+         Windows:
             venv\Scripts\activate
         
         macOS / Linux:
             source venv/bin/activate
 
-3. **Upgrade pip**  
+4. **Upgrade pip**  
